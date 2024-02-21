@@ -1,0 +1,396 @@
+---
+- hosts: homeserver
+  vars:
+    media_gid: 1001
+    media_uid: 1001
+    quassel_gid: 1002
+    quassel_uid: 1002
+    umask: "022"
+    timezone: "Europe/Istanbul"
+    basepath: "/mnt/storage/Media"
+    datapath: "{{ basepath }}/data"
+    qbittorrent_webui: 8080
+    qbittorrent_manual_webui: 8081
+    homer_config_dir: "/mnt/storage/Media/homer"
+    caddy_config_dir: "/mnt/storage/Media/caddy"
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+
+    - name: Create Media group
+      ansible.builtin.group:
+        name: media
+        state: present
+        gid: "{{ media_gid }}"
+
+    - name: Create Media user
+      ansible.builtin.user:
+        name: media
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ media_uid }}"
+
+
+    - name: Copy Homer files to remote
+      ansible.builtin.copy:
+        src: homer/
+        dest: "{{ homer_config_dir }}"
+        owner: "{{ media_uid }}"
+        group: "{{ media_gid }}"
+        force: yes
+
+    - name: Create Homer container
+      containers.podman.podman_container:
+        name: homer
+        image: docker.io/b4bz/homer:latest
+        state: started
+        rm: true
+        detach: true
+        user: "{{ media_uid }}:{{ media_gid }}"
+        ports:
+          - "9090:8080/tcp"
+        volume:
+          - "{{ homer_config_dir }}:/www/assets"
+
+    - name: Generate Systemd unit file for Homer container
+      containers.podman.podman_generate_systemd:
+        name: homer
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Homer container is started and enabled
+      ansible.builtin.systemd:
+        name: container-homer
+        daemon_reload: true
+        state: started
+        enabled: true
+
+
+    - name: Create Jellyfin container
+      containers.podman.podman_container:
+        name: jellyfin
+        image: lscr.io/linuxserver/jellyfin:latest
+        state: started
+        rm: true
+        detach: true
+        ports:
+          - "8096:8096/tcp"
+          - "8920:8920/tcp"
+          - "1900:1900/udp"
+          - "7359:7359/udp"
+        env:
+          UMASK: "{{ umask }}"
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          TZ: "{{ timezone }}"
+          JELLYFIN_PublishedServerUrl: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
+        volume:
+          - "/mnt/storage/Media/jellyfin:/config"
+          - "{{ datapath }}/media:/data/media"
+        device:
+          - "/dev/video10"
+          - "/dev/video11"
+          - "/dev/video12"
+
+    - name: Generate Systemd unit file for Jellyfin container
+      containers.podman.podman_generate_systemd:
+        name: jellyfin
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Jellyfin container is started and enabled
+      ansible.builtin.systemd:
+        name: container-jellyfin
+        daemon_reload: true
+        state: started
+        enabled: true
+
+
+    - name: Create Komga container
+      containers.podman.podman_container:
+        name: komga
+        image: docker.io/gotson/komga:latest
+        state: started
+        rm: true
+        detach: true
+        user: "{{ media_uid }}:{{ media_gid }}"
+        ports:
+          - "25600:25600"
+        volume:
+          - "/mnt/storage/Media/komga:/config"
+          - "{{ datapath }}/media/books:/data/books"
+
+    - name: Generate Systemd unit file for Komga container
+      containers.podman.podman_generate_systemd:
+        name: komga
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Komga container is started and enabled
+      ansible.builtin.systemd:
+        name: container-komga
+        daemon_reload: true
+        state: started
+        enabled: true
+
+
+    - name: Create Qbittorrent (Manual) container
+      containers.podman.podman_container:
+        name: qbittorrent-manual
+        image: lscr.io/linuxserver/qbittorrent:4.5.2
+        state: started
+        rm: true
+        detach: true
+        ports:
+          - "{{ qbittorrent_manual_webui }}:{{ qbittorrent_manual_webui }}"
+          - "55001:55001"
+          - "55001:55001/udp"
+        env:
+          UMASK: "{{ umask }}"
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          TZ: "{{ timezone }}"
+          WEBUI_PORT: "{{ qbittorrent_manual_webui }}"
+        volume:
+          - "/mnt/storage/Media/qbittorrent-manual:/config"
+          - "{{ datapath }}/torrents:/data/torrents"
+
+    - name: Generate Systemd unit file for Qbittorrent (Manual) container
+      containers.podman.podman_generate_systemd:
+        name: qbittorrent-manual
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Qbittorrent (Manual) container is started and enabled
+      ansible.builtin.systemd:
+        name: "container-qbittorrent-manual"
+        daemon_reload: true
+        state: started
+        enabled: true
+
+
+    - name: Create Media pod
+      containers.podman.podman_pod:
+        name: media
+        ports:
+          - "9696:9696" # Prowlarr
+          - "8989:8989" # Sonarr
+          - "7878:7878" # Radarr
+          - "8686:8686" # Lidarr
+          - "8787:8787" # Readarr
+          - "55000:55000" # Qbittorrent
+          - "55000:55000/udp" # Qbittorrent
+          - "{{ qbittorrent_webui }}:{{ qbittorrent_webui }}" # Qbittorrent
+
+    - name: Create Prowlarr container
+      containers.podman.podman_container:
+        name: prowlarr
+        image: lscr.io/linuxserver/prowlarr:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          UMASK: "{{ umask }}"
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "/mnt/storage/Media/prowlarr:/config"
+
+    - name: Create Sonarr container
+      containers.podman.podman_container:
+        name: sonarr
+        image: lscr.io/linuxserver/sonarr:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          UMASK: "{{ umask }}"
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "/mnt/storage/Media/sonarr:/config"
+          - "{{ datapath }}:/data"
+
+    - name: Create Radarr container
+      containers.podman.podman_container:
+        name: radarr
+        image: lscr.io/linuxserver/radarr:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          UMASK: "{{ umask }}"
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "/mnt/storage/Media/radarr:/config"
+          - "{{ datapath }}:/data"
+
+    - name: Create Lidarr container
+      containers.podman.podman_container:
+        name: lidarr
+        image: lscr.io/linuxserver/lidarr:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          UMASK: "{{ umask }}"
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "/mnt/storage/Media/lidarr:/config"
+          - "{{ datapath }}:/data"
+
+    - name: Create Readarr container
+      containers.podman.podman_container:
+        name: readarr
+        image: lscr.io/linuxserver/readarr:develop
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          UMASK: "{{ umask }}"
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "/mnt/storage/Media/readarr:/config"
+          - "{{ datapath }}:/data"
+
+    - name: Create Qbittorrent container
+      containers.podman.podman_container:
+        name: qbittorrent
+        image: lscr.io/linuxserver/qbittorrent:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          UMASK: "{{ umask }}"
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          TZ: "{{ timezone }}"
+          WEBUI_PORT: "{{ qbittorrent_webui }}"
+        volume:
+          - "/mnt/storage/Media/qbittorrent:/config"
+          - "{{ datapath }}/torrents:/data/torrents"
+
+    - name: Generate Systemd unit file for Media pod
+      containers.podman.podman_generate_systemd:
+        name: media
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Media pod is started and enabled
+      ansible.builtin.systemd:
+        name: pod-media
+        daemon_reload: true
+        state: started
+        enabled: true
+
+
+    - name: Copy Caddy config to remote
+      ansible.builtin.copy:
+        src: caddy/
+        dest: "{{ caddy_config_dir }}"
+        owner: "{{ media_uid }}"
+        group: "{{ media_gid }}"
+        force: yes
+
+    - name: Create Caddy container
+      containers.podman.podman_container:
+        name: caddy
+        image: docker.io/library/caddy:latest
+        state: started
+        rm: true
+        detach: true
+        network: host
+        user: "{{ media_uid }}:{{ media_gid }}"
+        ports:
+          - "80:80"
+        volume:
+          - "{{ caddy_config_dir }}/Caddyfile:/etc/caddy/Caddyfile"
+
+    - name: Generate Systemd unit file for Caddy container
+      containers.podman.podman_generate_systemd:
+        name: caddy
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Caddy container is started and enabled
+      ansible.builtin.systemd:
+        name: container-caddy
+        daemon_reload: true
+        state: started
+        enabled: true
+
+
+    - name: Create Quassel group
+      ansible.builtin.group:
+        name: quassel
+        state: present
+        gid: "{{ quassel_gid }}"
+
+    - name: Create Quassel user
+      ansible.builtin.user:
+        name: quassel
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ quassel_uid }}"
+
+    - name: Create Quassel pod
+      containers.podman.podman_pod:
+        name: quassel
+        ports:
+          - "4242:4242" # "Quassel-core"
+          - "113:10113" # "Quassel-core"
+
+    - name: Create Quassel-core container
+      containers.podman.podman_container:
+        name: prowlarr
+        image: lscr.io/linuxserver/quassel-core:latest
+        pod: quassel
+        state: started
+        rm: true
+        detach: true
+        env:
+          UMASK: "{{ umask }}"
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          TZ: "{{ timezone }}"
+          RUN_OPTS: "--config-from-environment"
+          DB_BACKEND: "SQLite"
+          AUTH_AUTHENTICATOR: "Database"
+        volume:
+          - "/mnt/storage/Quassel/core:/config"
+
+    - name: Generate Systemd unit file for Quassel pod
+      containers.podman.podman_generate_systemd:
+        name: quassel
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Quassel pod is started and enabled
+      ansible.builtin.systemd:
+        name: pod-quassel
+        daemon_reload: true
+        state: started
+        enabled: true
