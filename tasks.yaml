@@ -365,7 +365,7 @@
 
     - name: Create Quassel-core container
       containers.podman.podman_container:
-        name: prowlarr
+        name: quassel-core
         image: lscr.io/linuxserver/quassel-core:latest
         pod: quassel
         state: started
