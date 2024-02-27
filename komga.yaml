@@ -1,0 +1,58 @@
+---
+- hosts: homeserver
+  vars:
+    media_uid: 1001
+    media_gid: 1001
+    data_dir: "/mnt/storage/Media/data"
+
+    komga_config_dir: "/mnt/storage/Media/komga"
+    komga_webui_port: 25600
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Media group
+      ansible.builtin.group:
+        name: media
+        state: present
+        gid: "{{ media_gid }}"
+
+    - name: Create Media user
+      ansible.builtin.user:
+        name: media
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ media_uid }}"
+
+    - name: Create Komga container
+      containers.podman.podman_container:
+        name: komga
+        image: docker.io/gotson/komga:latest
+        state: started
+        rm: true
+        detach: true
+        user: "{{ media_uid }}:{{ media_gid }}"
+        ports:
+          - "{{ komga_webui_port }}:25600"
+        volume:
+          - "{{ komga_config_dir }}:/config"
+          - "{{ data_dir }}:/data"
+
+    - name: Generate Systemd unit file for Komga container
+      containers.podman.podman_generate_systemd:
+        name: komga
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Komga container is started and enabled
+      ansible.builtin.systemd:
+        name: container-komga
+        daemon_reload: true
+        state: started
+        enabled: true

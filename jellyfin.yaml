@@ -1,0 +1,72 @@
+---
+- hosts: homeserver
+  vars:
+    media_uid: 1001
+    media_gid: 1001
+    umask: "022"
+    timezone: "Europe/Istanbul"
+    data_dir: "/mnt/storage/Media/data"
+
+    jellyfin_config_dir: "/mnt/storage/Media/jellyfin"
+    jellyfin_webui_port: 8096
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Media group
+      ansible.builtin.group:
+        name: media
+        state: present
+        gid: "{{ media_gid }}"
+
+    - name: Create Media user
+      ansible.builtin.user:
+        name: media
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ media_uid }}"
+
+    - name: Create Jellyfin container
+      containers.podman.podman_container:
+        name: jellyfin
+        image: lscr.io/linuxserver/jellyfin:latest
+        state: started
+        rm: true
+        detach: true
+        ports:
+          - "{{ jellyfin_webui_port }}:8096/tcp"
+          # - "8920:8920/tcp" # For https / tls authentication
+          # - "1900:1900/udp" # For local network discovery
+          # - "7359:7359/udp" # For DLNA
+        env:
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          UMASK: "{{ umask }}"
+          TZ: "{{ timezone }}"
+          JELLYFIN_PublishedServerUrl: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
+        volume:
+          - "{{ jellyfin_config_dir }}:/config"
+          - "{{ data_dir }}:/data"
+        device:
+          - "/dev/video10"
+          - "/dev/video11"
+          - "/dev/video12"
+
+    - name: Generate Systemd unit file for Jellyfin container
+      containers.podman.podman_generate_systemd:
+        name: jellyfin
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Jellyfin container is started and enabled
+      ansible.builtin.systemd:
+        name: container-jellyfin
+        daemon_reload: true
+        state: started
+        enabled: true

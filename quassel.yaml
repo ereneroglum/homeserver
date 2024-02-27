@@ -1,0 +1,67 @@
+---
+- hosts: homeserver
+  vars:
+    quassel_uid: 1002
+    quassel_gid: 1002
+    umask: "022"
+    timezone: "Europe/Istanbul"
+
+    quassel_config_dir: "/mnt/storage/Quassel/core"
+    quassel_port: 4242
+    quassel_tls_port: 113
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Quassel group
+      ansible.builtin.group:
+        name: quassel
+        state: present
+        gid: "{{ quassel_gid }}"
+
+    - name: Create Quassel user
+      ansible.builtin.user:
+        name: quassel
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ quassel_uid }}"
+
+    - name: Create Quassel container
+      containers.podman.podman_container:
+        name: quassel
+        image: lscr.io/linuxserver/quassel-core:latest
+        state: started
+        rm: true
+        detach: true
+        ports:
+          - "{{ quassel_port }}:4242"
+          - "{{ quassel_tls_port }}:10113"
+        env:
+          PUID: "{{ quassel_uid }}"
+          PGID: "{{ quassel_gid }}"
+          UMASK: "{{ umask }}"
+          TZ: "{{ timezone }}"
+          RUN_OPTS: "--config-from-environment"
+          DB_BACKEND: "SQLite"
+          AUTH_AUTHENTICATOR: "Database"
+        volume:
+          - "{{ quassel_config_dir }}:/config"
+
+    - name: Generate Systemd unit file for Quassel container
+      containers.podman.podman_generate_systemd:
+        name: quassel
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Quassel container is started and enabled
+      ansible.builtin.systemd:
+        name: container-quassel
+        daemon_reload: true
+        state: started
+        enabled: true

@@ -1,0 +1,64 @@
+---
+- hosts: homeserver
+  vars:
+    media_uid: 1001
+    media_gid: 1001
+
+    caddy_config_dir: "/mnt/storage/Media/caddy"
+    # Exported ports should be changed from below
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Media group
+      ansible.builtin.group:
+        name: media
+        state: present
+        gid: "{{ media_gid }}"
+
+    - name: Create Media user
+      ansible.builtin.user:
+        name: media
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ media_uid }}"
+
+    - name: Copy Caddy config to remote
+      ansible.builtin.copy:
+        src: caddy/
+        dest: "{{ caddy_config_dir }}"
+        owner: "{{ media_uid }}"
+        group: "{{ media_gid }}"
+        force: yes
+
+    - name: Create Caddy container
+      containers.podman.podman_container:
+        name: caddy
+        image: docker.io/library/caddy:latest
+        state: started
+        rm: true
+        detach: true
+        network: host
+        user: "{{ media_uid }}:{{ media_gid }}"
+        volume:
+          - "{{ caddy_config_dir }}/Caddyfile:/etc/caddy/Caddyfile"
+
+    - name: Generate Systemd unit file for Caddy container
+      containers.podman.podman_generate_systemd:
+        name: caddy
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Caddy container is started and enabled
+      ansible.builtin.systemd:
+        name: container-caddy
+        daemon_reload: true
+        state: started
+        enabled: true
+

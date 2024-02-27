@@ -1,0 +1,177 @@
+---
+- hosts: homeserver
+  vars:
+    media_uid: 1001
+    media_gid: 1001
+    umask: "022"
+    timezone: "Europe/Istanbul"
+    data_dir: "/mnt/storage/Media/data"
+
+    prowlarr_config_dir: "/mnt/storage/Media/prowlarr"
+    prowlarr_webui_port: 9696
+
+    sonarr_config_dir: "/mnt/storage/Media/sonarr"
+    sonarr_webui_port: 8989
+
+    radarr_config_dir: "/mnt/storage/Media/radarr"
+    radarr_webui_port: 7878
+
+    lidarr_config_dir: "/mnt/storage/Media/lidarr"
+    lidarr_webui_port: 8686
+
+    readarr_config_dir: "/mnt/storage/Media/readarr"
+    readarr_webui_port: 8787
+
+    qbittorrent_config_dir: "/mnt/storage/Media/qbittorrent"
+    qbittorrent_torrent_port: 55000
+    qbittorrent_webui_port: 8080
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Media group
+      ansible.builtin.group:
+        name: media
+        state: present
+        gid: "{{ media_gid }}"
+
+    - name: Create Media user
+      ansible.builtin.user:
+        name: media
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ media_uid }}"
+
+    - name: Create Media pod
+      containers.podman.podman_pod:
+        name: media
+        ports:
+          - "{{ prowlarr_webui_port }}:9696" # Prowlarr
+          - "{{ sonarr_webui_port }}:8989" # Sonarr
+          - "{{ radarr_webui_port }}:7878" # Radarr
+          - "{{ lidarr_webui_port }}:8686" # Lidarr
+          - "{{ readarr_webui_port }}:8787" # Readarr
+          - "{{ qbittorrent_torrent_port }}:{{ qbittorrent_torrent_port }}" # Qbittorrent
+          - "{{ qbittorrent_torrent_port }}:{{ qbittorrent_torrent_port }}/udp" # Qbittorrent
+          - "{{ qbittorrent_webui_port }}:{{ qbittorrent_webui_port }}" # Qbittorrent
+
+    - name: Create Prowlarr container
+      containers.podman.podman_container:
+        name: prowlarr
+        image: lscr.io/linuxserver/prowlarr:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          UMASK: "{{ umask }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "{{ prowlarr_config_dir }}:/config"
+
+    - name: Create Sonarr container
+      containers.podman.podman_container:
+        name: sonarr
+        image: lscr.io/linuxserver/sonarr:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          UMASK: "{{ umask }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "{{ sonarr_config_dir }}:/config"
+          - "{{ data_dir }}:/data"
+
+    - name: Create Radarr container
+      containers.podman.podman_container:
+        name: radarr
+        image: lscr.io/linuxserver/radarr:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          UMASK: "{{ umask }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "{{ radarr_config_dir }}:/config"
+          - "{{ data_dir }}:/data"
+
+    - name: Create Lidarr container
+      containers.podman.podman_container:
+        name: lidarr
+        image: lscr.io/linuxserver/lidarr:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          UMASK: "{{ umask }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "{{ lidarr_config_dir }}:/config"
+          - "{{ data_dir }}:/data"
+
+    - name: Create Readarr container
+      containers.podman.podman_container:
+        name: readarr
+        image: lscr.io/linuxserver/readarr:develop
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          UMASK: "{{ umask }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "{{ readarr_config_dir }}:/config"
+          - "{{ data_dir }}:/data"
+
+    - name: Create Qbittorrent container
+      containers.podman.podman_container:
+        name: qbittorrent
+        image: lscr.io/linuxserver/qbittorrent:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        env:
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          UMASK: "{{ umask }}"
+          TZ: "{{ timezone }}"
+          WEBUI_PORT: "{{ qbittorrent_webui_port }}"
+        volume:
+          - "{{ qbittorrent_config_dir }}:/config"
+          - "{{ data_dir }}:/data"
+
+    - name: Generate Systemd unit file for Media pod
+      containers.podman.podman_generate_systemd:
+        name: media
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Media pod is started and enabled
+      ansible.builtin.systemd:
+        name: pod-media
+        daemon_reload: true
+        state: started
+        enabled: true

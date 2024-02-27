@@ -1,0 +1,68 @@
+---
+- hosts: homeserver
+  vars:
+    media_uid: 1001
+    media_gid: 1001
+    umask: "022"
+    timezone: "Europe/Istanbul"
+    data_dir: "/mnt/storage/Media/data"
+
+    qbittorrent_config_dir: "/mnt/storage/Media/qbittorrent-manual"
+    qbittorrent_torrent_port: 55001
+    qbittorrent_webui_port: 8081
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Media group
+      ansible.builtin.group:
+        name: media
+        state: present
+        gid: "{{ media_gid }}"
+
+    - name: Create Media user
+      ansible.builtin.user:
+        name: media
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ media_uid }}"
+
+    - name: Create Qbittorrent (Manual) container
+      containers.podman.podman_container:
+        name: qbittorrent-manual
+        image: lscr.io/linuxserver/qbittorrent:4.5.2
+        state: started
+        rm: true
+        detach: true
+        ports:
+          - "{{ qbittorrent_torrent_port }}:{{ qbittorrent_torrent_port }}"
+          - "{{ qbittorrent_torrent_port }}:{{ qbittorrent_torrent_port }}/udp"
+          - "{{ qbittorrent_webui_port }}:{{ qbittorrent_webui_port }}"
+        env:
+          PUID: "{{ media_uid }}"
+          PGID: "{{ media_gid }}"
+          UMASK: "{{ umask }}"
+          TZ: "{{ timezone }}"
+          WEBUI_PORT: "{{ qbittorrent_webui_port }}"
+        volume:
+          - "{{ qbittorrent_config_dir }}:/config"
+          - "{{ data_dir }}:/data"
+
+    - name: Generate Systemd unit file for Qbittorrent (Manual) container
+      containers.podman.podman_generate_systemd:
+        name: qbittorrent-manual
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Qbittorrent (Manual) container is started and enabled
+      ansible.builtin.systemd:
+        name: "container-qbittorrent-manual"
+        daemon_reload: true
+        state: started
+        enabled: true

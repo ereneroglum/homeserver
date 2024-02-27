@@ -1,0 +1,64 @@
+---
+- hosts: homeserver
+  vars:
+    media_uid: 1001
+    media_gid: 1001
+
+    homer_config_dir: "/mnt/storage/Media/homer"
+    homer_webui_port: 9090
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Media group
+      ansible.builtin.group:
+        name: media
+        state: present
+        gid: "{{ media_gid }}"
+
+    - name: Create Media user
+      ansible.builtin.user:
+        name: media
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ media_uid }}"
+
+    - name: Copy Homer files to remote
+      ansible.builtin.copy:
+        src: homer/
+        dest: "{{ homer_config_dir }}"
+        owner: "{{ media_uid }}"
+        group: "{{ media_gid }}"
+        force: yes
+
+    - name: Create Homer container
+      containers.podman.podman_container:
+        name: homer
+        image: docker.io/b4bz/homer:latest
+        state: started
+        rm: true
+        detach: true
+        user: "{{ media_uid }}:{{ media_gid }}"
+        ports:
+          - "{{ homer_webui_port }}:8080/tcp"
+        volume:
+          - "{{ homer_config_dir }}:/www/assets"
+
+    - name: Generate Systemd unit file for Homer container
+      containers.podman.podman_generate_systemd:
+        name: homer
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Homer container is started and enabled
+      ansible.builtin.systemd:
+        name: container-homer
+        daemon_reload: true
+        state: started
+        enabled: true
