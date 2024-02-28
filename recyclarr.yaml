@@ -29,6 +29,15 @@
         create_home: false
         uid: "{{ media_uid }}"
 
+    - name: Create Recyclarr config directory
+      ansible.builtin.file:
+        path: "{{ recyclarr_config_dir }}"
+        state: directory
+        owner: media
+        group: media
+        mode: 0755
+        recurse: yes
+
     - name: Create Recyclarr config
       containers.podman.podman_container:
         name: recyclarr

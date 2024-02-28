@@ -32,6 +32,15 @@
         create_home: false
         uid: "{{ quassel_uid }}"
 
+    - name: Create Quassel config directory
+      ansible.builtin.file:
+        path: "{{ quassel_config_dir }}"
+        state: directory
+        owner: quassel
+        group: quassel
+        mode: 0755
+        recurse: yes
+
     - name: Create Quassel container
       containers.podman.podman_container:
         name: quassel

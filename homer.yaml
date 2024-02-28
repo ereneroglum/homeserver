@@ -29,6 +29,15 @@
         create_home: false
         uid: "{{ media_uid }}"
 
+    - name: Create Homer config directory
+      ansible.builtin.file:
+        path: "{{ homer_config_dir }}"
+        state: directory
+        owner: media
+        group: media
+        mode: 0755
+        recurse: yes
+
     - name: Copy Homer files to remote
       ansible.builtin.copy:
         src: homer/

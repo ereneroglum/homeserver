@@ -29,6 +29,15 @@
         create_home: false
         uid: "{{ media_uid }}"
 
+    - name: Create Caddy config directory
+      ansible.builtin.file:
+        path: "{{ caddy_config_dir }}"
+        state: directory
+        owner: media
+        group: media
+        mode: 0755
+        recurse: yes
+
     - name: Copy Caddy config to remote
       ansible.builtin.copy:
         src: caddy/
