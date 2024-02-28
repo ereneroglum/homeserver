@@ -95,6 +95,14 @@ services:
         subtitle: "Indexer Manager"
         keywords: "pvr indexer manager"
         url: "http://192.168.1.5:9696"
+  - name: "Cloud"
+    icon: "fas fa-cloud"
+    items:
+      - name: "Nextcloud"
+        logo: "assets/tools/nextcloud.png"
+        subtitle: "A safe home for all your data – community-driven, free & open source"
+        keywords: "cloud calendar"
+        url: "http://192.168.1.5:5080"
   - name: "Infrastructure"
     icon: "fas fa-ethernet"
     items:
