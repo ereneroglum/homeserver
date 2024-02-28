@@ -93,7 +93,7 @@ quasselcore --configdir=/config --add-user
 
 Exit the shell with ```exit``` and start your container with ```sudo systemctl start container-quassel```.
 
-## Finding adming password of Qbittorrent
+## Finding admin password of Qbittorrent
 
 You can find password of both Qbittorrent instances by:
 
