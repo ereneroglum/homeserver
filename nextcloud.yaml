@@ -12,8 +12,6 @@
     mysql_user: nextcloud
     mysql_password: "rB2lIYDaxykuvn3"
 
-    redis_password: "AnHS0LuMIEnWMcp"
-
   tasks:
     - name: Install Podman
       ansible.builtin.package:
@@ -95,20 +93,6 @@
         volume:
           - "{{ nextcloud_config_dir }}/db:/var/lib/mysql"
 
-    - name: Create Redis container
-      containers.podman.podman_container:
-        name: nextcloud-redis
-        image: docker.io/library/redis:alpine
-        pod: nextcloud
-        state: started
-        rm: true
-        detach: true
-        user: "{{ nextcloud_uid }}:{{ nextcloud_gid }}"
-        command:
-          - "redis-server"
-          - "--requirepass"
-          - "{{ redis_password }}"
-
     - name: Create Nextcloud-app container
       containers.podman.podman_container:
         name: nextcloud-app
@@ -123,8 +107,6 @@
           MYSQL_DATABASE: "{{ mysql_database }}"
           MYSQL_USER: "{{ mysql_user }}"
           MYSQL_PASSWORD: "{{ mysql_password }}"
-          REDIS_HOST: "127.0.0.1"
-          REDIS_HOST_PASSWORD: "{{ redis_password }}"
         volume:
           - "{{ nextcloud_config_dir }}/html:/var/www/html"
           - "{{ nextcloud_config_dir }}/data:/var/www/html/data"
