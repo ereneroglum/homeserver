@@ -314,8 +314,8 @@ sonarr:
 
 radarr:
   movies:
-    base_url:
-    api_key:
+    base_url: # EDIT THIS
+    api_key: # EDIT THIS
 
     delete_old_custom_formats: true
     replace_existing_custom_formats: true
