@@ -147,7 +147,7 @@
           - "{{ radarr_config_dir }}:/config"
           - "{{ data_dir }}:/data"
 
-    - name: Create Prowlarr config directory
+    - name: Create Lidarr config directory
       ansible.builtin.file:
         path: "{{ lidarr_config_dir }}"
         state: directory
@@ -173,7 +173,7 @@
           - "{{ lidarr_config_dir }}:/config"
           - "{{ data_dir }}:/data"
 
-    - name: Create Prowlarr config directory
+    - name: Create Readarr config directory
       ansible.builtin.file:
         path: "{{ readarr_config_dir }}"
         state: directory
