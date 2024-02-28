@@ -1,0 +1,88 @@
+---
+- hosts: homeserver
+  vars:
+    media_uid: 1001
+    media_gid: 1001
+    timezone: "Europe/Istanbul"
+
+    recyclarr_config_dir: "/mnt/storage/Media/recyclarr"
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Media group
+      ansible.builtin.group:
+        name: media
+        state: present
+        gid: "{{ media_gid }}"
+
+    - name: Create Media user
+      ansible.builtin.user:
+        name: media
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ media_uid }}"
+
+    - name: Create Recyclarr config
+      containers.podman.podman_container:
+        name: recyclarr
+        image: ghcr.io/recyclarr/recyclarr
+        state: started
+        rm: true
+        detach: true
+        user: "{{ media_uid }}:{{ media_gid }}"
+        env:
+          TZ: "{{ timezone }}"
+        volume:
+          - "{{ recyclarr_config_dir }}:/config"
+        command:
+          - "config"
+          - "create"
+
+    - name: Copy recyclarr.yaml to remote
+      ansible.builtin.copy:
+        src: recyclarr/recyclarr.yaml
+        dest: "{{ recyclarr_config_dir }}/recyclarr.yml"
+        owner: "{{ media_uid }}"
+        group: "{{ media_gid }}"
+        force: yes
+
+    - name: Sync sonarr
+      containers.podman.podman_container:
+        name: recyclarr
+        image: ghcr.io/recyclarr/recyclarr
+        state: started
+        rm: true
+        detach: true
+        network: host
+        user: "{{ media_uid }}:{{ media_gid }}"
+        env:
+          TZ: "{{ timezone }}"
+        volume:
+          - "{{ recyclarr_config_dir }}:/config"
+        command:
+          - "sync"
+          - "sonarr"
+
+    - name: Sync radarr
+      containers.podman.podman_container:
+        name: recyclarr
+        image: ghcr.io/recyclarr/recyclarr
+        state: started
+        rm: true
+        detach: true
+        network: host
+        user: "{{ media_uid }}:{{ media_gid }}"
+        env:
+          TZ: "{{ timezone }}"
+        volume:
+          - "{{ recyclarr_config_dir }}:/config"
+        command:
+          - "sync"
+          - "radarr"
