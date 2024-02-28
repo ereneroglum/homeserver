@@ -47,7 +47,7 @@
 
     - name: Copy recyclarr.yaml to remote
       ansible.builtin.copy:
-        src: recyclarr/recyclarr.yaml
+        src: recyclarr/recyclarr.yml
         dest: "{{ recyclarr_config_dir }}/recyclarr.yml"
         owner: "{{ media_uid }}"
         group: "{{ media_gid }}"
