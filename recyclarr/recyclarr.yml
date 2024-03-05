@@ -76,7 +76,7 @@ sonarr:
           - 418f50b10f1907201b6cfdf881f467b7 # Anime Dual Audio
         quality_profiles:
           - name: Remux-1080p - Anime
-            score: 101
+            score: 10
 
       ## Prefer Uncensored
       - trash_ids:
@@ -404,7 +404,7 @@ radarr:
           - 4a3b087eea2ce012fcc1ce319259a3be # Anime Dual Audio
         quality_profiles:
           - name: Remux-1080p - Anime
-            score: 101
+            score: 10
 
       ## Prefer Uncensored
       - trash_ids:
