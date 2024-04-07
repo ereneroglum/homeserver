@@ -4,7 +4,7 @@
     media_uid: 1001
     media_gid: 1001
 
-    caddy_config_dir: "/mnt/storage/Media/caddy"
+    caddy_config_dir: "/media/westerndigital/Media/caddy"
     # Exported ports should be changed from below
 
   tasks:

@@ -5,24 +5,24 @@
     media_gid: 1001
     umask: "022"
     timezone: "Europe/Istanbul"
-    data_dir: "/mnt/storage/Media/data"
+    data_dir: "/media/westerndigital/Media/data"
 
-    prowlarr_config_dir: "/mnt/storage/Media/prowlarr"
+    prowlarr_config_dir: "/media/westerndigital/Media/prowlarr"
     prowlarr_webui_port: 9696
 
-    sonarr_config_dir: "/mnt/storage/Media/sonarr"
+    sonarr_config_dir: "/media/westerndigital/Media/sonarr"
     sonarr_webui_port: 8989
 
-    radarr_config_dir: "/mnt/storage/Media/radarr"
+    radarr_config_dir: "/media/westerndigital/Media/radarr"
     radarr_webui_port: 7878
 
-    lidarr_config_dir: "/mnt/storage/Media/lidarr"
+    lidarr_config_dir: "/media/westerndigital/Media/lidarr"
     lidarr_webui_port: 8686
 
-    readarr_config_dir: "/mnt/storage/Media/readarr"
+    readarr_config_dir: "/media/westerndigital/Media/readarr"
     readarr_webui_port: 8787
 
-    qbittorrent_config_dir: "/mnt/storage/Media/qbittorrent"
+    qbittorrent_config_dir: "/media/westerndigital/Media/qbittorrent"
     qbittorrent_torrent_port: 55000
     qbittorrent_webui_port: 8080
 

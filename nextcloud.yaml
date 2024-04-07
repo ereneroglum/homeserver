@@ -4,7 +4,7 @@
     nextcloud_uid: 1003
     nextcloud_gid: 1003
 
-    nextcloud_config_dir: "/mnt/storage/Nextcloud"
+    nextcloud_config_dir: "/media/westerndigital/Nextcloud"
     nextcloud_webui_port: 5080
 
     mysql_root_password: "wnbb4pTF8lkAjH8"

@@ -4,7 +4,7 @@
     media_uid: 1001
     media_gid: 1001
 
-    homer_config_dir: "/mnt/storage/Media/homer"
+    homer_config_dir: "/media/westerndigital/Media/homer"
     homer_webui_port: 9090
 
   tasks:

@@ -3,9 +3,9 @@
   vars:
     media_uid: 1001
     media_gid: 1001
-    data_dir: "/mnt/storage/Media/data"
+    data_dir: "/media/westerndigital/Media/data"
 
-    komga_config_dir: "/mnt/storage/Media/komga"
+    komga_config_dir: "/media/westerndigital/Media/komga"
     komga_webui_port: 25600
 
   tasks:

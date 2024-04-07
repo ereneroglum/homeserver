@@ -5,7 +5,7 @@
     media_gid: 1001
     timezone: "Europe/Istanbul"
 
-    recyclarr_config_dir: "/mnt/storage/Media/recyclarr"
+    recyclarr_config_dir: "/media/westerndigital/Media/recyclarr"
 
   tasks:
     - name: Install Podman

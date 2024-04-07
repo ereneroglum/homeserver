@@ -5,9 +5,9 @@
     media_gid: 1001
     umask: "022"
     timezone: "Europe/Istanbul"
-    data_dir: "/mnt/storage/Media/data"
+    data_dir: "/media/westerndigital/Media/data"
 
-    jellyfin_config_dir: "/mnt/storage/Media/jellyfin"
+    jellyfin_config_dir: "/media/westerndigital/Media/jellyfin"
     jellyfin_webui_port: 8096
 
   tasks:

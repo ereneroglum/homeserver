@@ -6,7 +6,7 @@
     umask: "022"
     timezone: "Europe/Istanbul"
 
-    quassel_config_dir: "/mnt/storage/Quassel/core"
+    quassel_config_dir: "/media/westerndigital/Quassel/core"
     quassel_port: 4242
     quassel_tls_port: 113
 
