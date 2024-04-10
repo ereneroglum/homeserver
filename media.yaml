@@ -26,6 +26,10 @@
     qbittorrent_torrent_port: 55000
     qbittorrent_webui_port: 8080
 
+    slskd_config_dir: "/media/westerndigital/Media/slskd"
+    slskd_soulseek_port: 50300
+    slskd_webui_port: 5030
+
   tasks:
     - name: Install Podman
       ansible.builtin.package:
@@ -48,7 +52,7 @@
         create_home: false
         uid: "{{ media_uid }}"
 
-    - name: Create data directory
+    - name: Create Data directory
       ansible.builtin.file:
         path: "{{ data_dir }}"
         state: directory
@@ -69,6 +73,8 @@
           - "{{ qbittorrent_torrent_port }}:{{ qbittorrent_torrent_port }}" # Qbittorrent
           - "{{ qbittorrent_torrent_port }}:{{ qbittorrent_torrent_port }}/udp" # Qbittorrent
           - "{{ qbittorrent_webui_port }}:{{ qbittorrent_webui_port }}" # Qbittorrent
+          - "{{ slskd_soulseek_port }}:50300" # Slskd
+          - "{{ slskd_webui_port }}:5030" # Slskd
 
     - name: Create Prowlarr config directory
       ansible.builtin.file:
@@ -224,6 +230,30 @@
           WEBUI_PORT: "{{ qbittorrent_webui_port }}"
         volume:
           - "{{ qbittorrent_config_dir }}:/config"
+          - "{{ data_dir }}:/data"
+
+    - name: Create Slskd config directory
+      ansible.builtin.file:
+        path: "{{ slskd_config_dir }}"
+        state: directory
+        owner: media
+        group: media
+        mode: 0755
+        recurse: yes
+
+    - name: Create Slskd container
+      containers.podman.podman_container:
+        name: slskd
+        image: docker.io/slskd/slskd:latest
+        pod: media
+        state: started
+        rm: true
+        detach: true
+        user: "{{ media_uid }}:{{ media_gid }}"
+        env:
+          SLSKD_REMOTE_CONFIGURATION: "true"
+        volume:
+          - "{{ slskd_config_dir }}:/app"
           - "{{ data_dir }}:/data"
 
     - name: Generate Systemd unit file for Media pod

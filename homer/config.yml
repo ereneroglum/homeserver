@@ -87,6 +87,11 @@ services:
         subtitle: "Bittorrent Client"
         keywords: "download bittorrrent client"
         url: "http://192.168.1.5:8081"
+      - name: "Slskd"
+        logo: "assets/tools/slskd.svg"
+        subtitle: "Soulseek Client"
+        keywords: "download soulseek client music"
+        url: "http://192.168.1.5:5030"
   - name: "Proxy"
     icon: "fas fa-plug"
     items:
