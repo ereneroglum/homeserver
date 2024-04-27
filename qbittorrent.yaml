@@ -54,7 +54,7 @@
     - name: Create Qbittorrent (Manual) container
       containers.podman.podman_container:
         name: qbittorrent-manual
-        image: lscr.io/linuxserver/qbittorrent:4.5.2
+        image: lscr.io/linuxserver/qbittorrent:4.6.3
         state: started
         rm: true
         detach: true
