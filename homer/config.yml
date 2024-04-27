@@ -108,6 +108,11 @@ services:
         subtitle: "A safe home for all your data – community-driven, free & open source"
         keywords: "cloud calendar"
         url: "http://192.168.1.5:5080"
+      - name: "Syncthing"
+        logo: "assets/tools/syncthing.svg"
+        subtitle: "Open Source Continuous File Synchronization"
+        keywords: "sync files"
+        url: "http://192.168.1.5:8384"
   - name: "Infrastructure"
     icon: "fas fa-ethernet"
     items:

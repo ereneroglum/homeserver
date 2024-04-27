@@ -8,7 +8,7 @@ First change server IP in ```inventory``` file.
 
 Then change IP addresses in ```homer/config.yml```. Now you can deploy the configuration excpet ```recyclarr.yaml```.
 
-After deploying media stack, change IP and API Keys in ```recyclarr/recyclarr.yml```.
+After deploying media stack, change IP and API Keys in ```recyclarr/recyclarr.yml```. After deployment, I manual set up Samba and Syncthing.
 
 ## How to deploy
 
