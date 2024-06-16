@@ -1,0 +1,71 @@
+---
+- hosts: homeserver
+  vars:
+    freshrss_uid: 1005
+    freshrss_gid: 1005
+    umask: "022"
+    timezone: "Europe/Istanbul"
+
+    freshrss_config_dir: "/media/westerndigital/Freshrss"
+    freshrss_webui_port: 7000
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Freshrss group
+      ansible.builtin.group:
+        name: freshrss
+        state: present
+        gid: "{{ freshrss_gid }}"
+
+    - name: Create Freshrss user
+      ansible.builtin.user:
+        name: freshrss
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ freshrss_uid }}"
+
+    - name: Create Freshrss config directory
+      ansible.builtin.file:
+        path: "{{ freshrss_config_dir }}"
+        state: directory
+        owner: freshrss
+        group: freshrss
+        mode: 0755
+        recurse: yes
+
+    - name: Create Freshrss container
+      containers.podman.podman_container:
+        name: freshrss
+        image: lscr.io/linuxserver/freshrss:latest
+        state: started
+        rm: true
+        detach: true
+        ports:
+          - "{{ freshrss_webui_port }}:80/tcp"
+        env:
+          PUID: "{{ freshrss_uid }}"
+          PGID: "{{ freshrss_gid }}"
+          UMASK: "{{ umask }}"
+          TZ: "{{ timezone }}"
+        volume:
+          - "{{ freshrss_config_dir }}:/config"
+
+    - name: Generate Systemd unit file for Freshrss container
+      containers.podman.podman_generate_systemd:
+        name: freshrss
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Freshrss container is started and enabled
+      ansible.builtin.systemd:
+        name: container-freshrss
+        daemon_reload: true
+        state: started
+        enabled: true

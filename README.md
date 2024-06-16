@@ -30,6 +30,7 @@ In any order:
 - Nextcloud
 - Qbittorrent
 - Quassel
+- Freshrss
 
 In order:
 
