@@ -72,9 +72,9 @@
           - "{{ jellyfin_config_dir }}:/config"
           - "{{ data_dir }}:/data"
         device:
-          - "/dev/video10"
-          - "/dev/video11"
-          - "/dev/video12"
+          # - "/dev/video10"
+          # - "/dev/video11"
+          # - "/dev/video12"
 
     - name: Generate Systemd unit file for Jellyfin container
       containers.podman.podman_generate_systemd:
