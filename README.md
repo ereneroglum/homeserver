@@ -30,14 +30,18 @@ In any order:
 - Nextcloud
 - Qbittorrent
 - Quassel
-- Freshrss
 
-In order:
+In order (1st Group):
 
 - Media
 - Homer (You need to edit ```homer/config.yml``` before this step)
 - Caddy
 - Recyclarr (You need to edit ```recyclarr/recyclarr.yml``` before this step)
+
+In order (2nd Group):
+
+- Rsshub
+- Freshrss
 
 ## About Dependencies
 

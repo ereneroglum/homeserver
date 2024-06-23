@@ -1,0 +1,96 @@
+---
+- hosts: homeserver
+  vars:
+    rsshub_uid: 1006
+    rsshub_gid: 1006
+
+    redis_data_directory: "/media/westerndigital/Rsshub"
+    rsshub_webui_port: 1200
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Rsshub group
+      ansible.builtin.group:
+        name: rsshub
+        state: present
+        gid: "{{ rsshub_gid }}"
+
+    - name: Create Rsshub user
+      ansible.builtin.user:
+        name: rsshub
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ rsshub_uid }}"
+
+    - name: Create Rsshub pod
+      containers.podman.podman_pod:
+        name: rsshub
+        ports:
+          - "{{ rsshub_webui_port }}:1200" # Rsshub
+
+    - name: Create Rsshub-app container
+      containers.podman.podman_container:
+        name: rsshub-app
+        image: docker.io/diygod/rsshub:latest
+        pod: rsshub
+        state: started
+        rm: true
+        detach: true
+        user: "{{ rsshub_uid }}:{{ rsshub_gid }}"
+        env:
+          NODE_ENV: production
+          CACHE_TYPE: redis
+          CACHE_EXPIRE: 3600
+          PUPPETEER_WS_ENDPOINT: 'ws://localhost:3000'
+
+    - name: Create Rsshub-browserless container
+      containers.podman.podman_container:
+        name: rsshub-browserless
+        image: docker.io/browserless/chrome:latest
+        pod: rsshub
+        state: started
+        rm: true
+        detach: true
+        user: "{{ rsshub_uid }}:{{ rsshub_gid }}"
+        ulimit: "core=0:0"
+
+    - name: Create Redis data directory
+      ansible.builtin.file:
+        path: "{{ redis_data_directory }}"
+        state: directory
+        owner: rsshub
+        group: rsshub
+        mode: 0755
+        recurse: yes
+
+    - name: Create Rsshub-redis container
+      containers.podman.podman_container:
+        name: rsshub-redis
+        image: docker.io/redis:alpine
+        pod: rsshub
+        state: started
+        rm: true
+        detach: true
+        user: "{{ rsshub_uid }}:{{ rsshub_gid }}"
+        volume:
+          - "{{ redis_data_directory }}:/data"
+
+    - name: Generate Systemd unit file for Rsshub pod
+      containers.podman.podman_generate_systemd:
+        name: rsshub
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Rsshub pod is started and enabled
+      ansible.builtin.systemd:
+        name: pod-rsshub
+        daemon_reload: true
+        state: started
+        enabled: true
