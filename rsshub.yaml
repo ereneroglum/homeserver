@@ -7,6 +7,16 @@
     redis_data_directory: "/media/westerndigital/Rsshub"
     rsshub_webui_port: 1200
 
+  vars_prompt:
+    - name: twitter_username
+      prompt: "Twitter Username"
+    - name: twitter_password
+      prompt: "Twitter Password"
+    - name: auth_token
+      prompt: "Twitter Auth Token Cookie"
+    - name: ct0
+      prompt: "Twitter CT0 Cookie"
+
   tasks:
     - name: Install Podman
       ansible.builtin.package:
@@ -49,6 +59,9 @@
           CACHE_TYPE: redis
           CACHE_EXPIRE: 3600
           PUPPETEER_WS_ENDPOINT: 'ws://localhost:3000'
+          TWITTER_USERNAME: "{{ twitter_username }}"
+          TWITTER_PASSWORD: "{{ twitter_password }}"
+          TWITTER_COOKIE: "auth_token={{ auth_token }}; ct0={{ ct0 }}"
 
     - name: Create Rsshub-browserless container
       containers.podman.podman_container:
