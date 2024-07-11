@@ -4,7 +4,8 @@
     media_uid: 1001
     media_gid: 1001
 
-    caddy_config_dir: "/media/westerndigital/Media/caddy"
+    caddy_config_dir: "/media/westerndigital/Media/caddy/config"
+    caddy_data_dir: "/media/westerndigital/Media/caddy/data"
     # Exported ports should be changed from below
 
   tasks:
@@ -29,9 +30,22 @@
         create_home: false
         uid: "{{ media_uid }}"
 
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
+
     - name: Create Caddy config directory
       ansible.builtin.file:
         path: "{{ caddy_config_dir }}"
+        state: directory
+        owner: media
+        group: media
+        mode: 0755
+        recurse: yes
+
+    - name: Create Caddy data directory
+      ansible.builtin.file:
+        path: "{{ caddy_data_dir }}"
         state: directory
         owner: media
         group: media
@@ -53,10 +67,13 @@
         state: started
         rm: true
         detach: true
-        network: host
+        network: homeserver-network
         user: "{{ media_uid }}:{{ media_gid }}"
+        ports:
+          - "443:443/tcp" # Default https port mapping
         volume:
-          - "{{ caddy_config_dir }}/Caddyfile:/etc/caddy/Caddyfile"
+          - "{{ caddy_config_dir }}:/etc/caddy"
+          - "{{ caddy_data_dir }}:/data/caddy"
 
     - name: Generate Systemd unit file for Caddy container
       containers.podman.podman_generate_systemd:

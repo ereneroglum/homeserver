@@ -1,6 +1,6 @@
 sonarr:
   series:
-    base_url: # EDIT THIS
+    base_url: http://sonarr:8989
     api_key: # EDIT THIS
 
     delete_old_custom_formats: true
@@ -314,7 +314,7 @@ sonarr:
 
 radarr:
   movies:
-    base_url: # EDIT THIS
+    base_url: http://radarr:7878
     api_key: # EDIT THIS
 
     delete_old_custom_formats: true

@@ -29,6 +29,10 @@
         create_home: false
         uid: "{{ media_uid }}"
 
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
+
     - name: Create Recyclarr config directory
       ansible.builtin.file:
         path: "{{ recyclarr_config_dir }}"
@@ -69,7 +73,7 @@
         state: started
         rm: true
         detach: true
-        network: host
+        network: homeserver-network
         user: "{{ media_uid }}:{{ media_gid }}"
         env:
           TZ: "{{ timezone }}"
@@ -86,7 +90,7 @@
         state: started
         rm: true
         detach: true
-        network: host
+        network: homeserver-network
         user: "{{ media_uid }}:{{ media_gid }}"
         env:
           TZ: "{{ timezone }}"

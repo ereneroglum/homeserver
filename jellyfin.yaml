@@ -8,7 +8,7 @@
     data_dir: "/media/westerndigital/Media/data"
 
     jellyfin_config_dir: "/media/westerndigital/Media/jellyfin"
-    jellyfin_webui_port: 8096
+    # jellyfin_webui_port: 8096
 
   tasks:
     - name: Install Podman
@@ -31,6 +31,10 @@
         shell: /usr/sbin/nologin
         create_home: false
         uid: "{{ media_uid }}"
+
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
 
     - name: Create data directory
       ansible.builtin.file:
@@ -57,8 +61,9 @@
         state: started
         rm: true
         detach: true
+        network: homeserver-network
         ports:
-          - "{{ jellyfin_webui_port }}:8096/tcp"
+          # - "{{ jellyfin_webui_port }}:8096/tcp"
           # - "8920:8920/tcp" # For https / tls authentication
           # - "1900:1900/udp" # For local network discovery
           # - "7359:7359/udp" # For DLNA

@@ -8,19 +8,19 @@
     data_dir: "/media/westerndigital/Media/data"
 
     prowlarr_config_dir: "/media/westerndigital/Media/prowlarr"
-    prowlarr_webui_port: 9696
+    # prowlarr_webui_port: 9696
 
     sonarr_config_dir: "/media/westerndigital/Media/sonarr"
-    sonarr_webui_port: 8989
+    # sonarr_webui_port: 8989
 
     radarr_config_dir: "/media/westerndigital/Media/radarr"
-    radarr_webui_port: 7878
+    # radarr_webui_port: 7878
 
     lidarr_config_dir: "/media/westerndigital/Media/lidarr"
-    lidarr_webui_port: 8686
+    # lidarr_webui_port: 8686
 
     readarr_config_dir: "/media/westerndigital/Media/readarr"
-    readarr_webui_port: 8787
+    # readarr_webui_port: 8787
 
     qbittorrent_config_dir: "/media/westerndigital/Media/qbittorrent"
     qbittorrent_torrent_port: 55000
@@ -28,7 +28,7 @@
 
     slskd_config_dir: "/media/westerndigital/Media/slskd"
     slskd_soulseek_port: 50300
-    slskd_webui_port: 5030
+    # slskd_webui_port: 5030
 
   tasks:
     - name: Install Podman
@@ -52,6 +52,10 @@
         create_home: false
         uid: "{{ media_uid }}"
 
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
+
     - name: Create Data directory
       ansible.builtin.file:
         path: "{{ data_dir }}"
@@ -64,17 +68,18 @@
     - name: Create Media pod
       containers.podman.podman_pod:
         name: media
+        network: homeserver-network
         ports:
-          - "{{ prowlarr_webui_port }}:9696" # Prowlarr
-          - "{{ sonarr_webui_port }}:8989" # Sonarr
-          - "{{ radarr_webui_port }}:7878" # Radarr
-          - "{{ lidarr_webui_port }}:8686" # Lidarr
-          - "{{ readarr_webui_port }}:8787" # Readarr
+          # - "{{ prowlarr_webui_port }}:9696" # Prowlarr
+          # - "{{ sonarr_webui_port }}:8989" # Sonarr
+          # - "{{ radarr_webui_port }}:7878" # Radarr
+          # - "{{ lidarr_webui_port }}:8686" # Lidarr
+          # - "{{ readarr_webui_port }}:8787" # Readarr
           - "{{ qbittorrent_torrent_port }}:{{ qbittorrent_torrent_port }}" # Qbittorrent
           - "{{ qbittorrent_torrent_port }}:{{ qbittorrent_torrent_port }}/udp" # Qbittorrent
-          - "{{ qbittorrent_webui_port }}:{{ qbittorrent_webui_port }}" # Qbittorrent
+          # - "{{ qbittorrent_webui_port }}:{{ qbittorrent_webui_port }}" # Qbittorrent
           - "{{ slskd_soulseek_port }}:50300" # Slskd
-          - "{{ slskd_webui_port }}:5030" # Slskd
+          # - "{{ slskd_webui_port }}:5030" # Slskd
 
     - name: Create Prowlarr config directory
       ansible.builtin.file:

@@ -1,3 +1,74 @@
-:80 {
-    reverse_proxy localhost:9090
+homer.local:443 {
+    tls internal
+    reverse_proxy homer:8080
+}
+
+komga.local:443 {
+    tls internal
+    reverse_proxy komga:25600
+}
+
+jellyfin.local:443 {
+    tls internal
+    reverse_proxy jellyfin:8096
+}
+
+freshrss.local:443 {
+    tls internal
+    reverse_proxy freshrss:80
+}
+
+sonarr.local:443 {
+    tls internal
+    reverse_proxy media:8989
+}
+
+radarr.local:443 {
+    tls internal
+    reverse_proxy media:7878
+}
+
+lidarr.local:443 {
+    tls internal
+    reverse_proxy media:8686
+}
+
+readarr.local:443 {
+    tls internal
+    reverse_proxy media:8787
+}
+
+qbittorrent.local:443 {
+    tls internal
+    reverse_proxy media:8080
+}
+
+qbittorrent-manual.local:443 {
+    tls internal
+    reverse_proxy qbittorrent-manual:8081
+}
+
+prowlarr.local:443 {
+    tls internal
+    reverse_proxy media:9696
+}
+
+slskd.local:443 {
+    tls internal
+    reverse_proxy media:5030
+}
+
+rsshub.local:443 {
+    tls internal
+    reverse_proxy rsshub:1200
+}
+
+homeassistant.local:443 {
+    tls internal
+    reverse_proxy homeassistant:8123
+}
+
+zigbee2mqtt.local:443 {
+    tls internal
+    reverse_proxy homeassistant:8080
 }

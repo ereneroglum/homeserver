@@ -5,7 +5,7 @@
     rsshub_gid: 1006
 
     redis_data_directory: "/media/westerndigital/Rsshub"
-    rsshub_webui_port: 1200
+    # rsshub_webui_port: 1200
 
   vars_prompt:
     - name: twitter_username
@@ -39,11 +39,16 @@
         create_home: false
         uid: "{{ rsshub_uid }}"
 
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
+
     - name: Create Rsshub pod
       containers.podman.podman_pod:
         name: rsshub
+        network: homeserver-network
         ports:
-          - "{{ rsshub_webui_port }}:1200" # Rsshub
+          # - "{{ rsshub_webui_port }}:1200" # Rsshub
 
     - name: Create Rsshub-app container
       containers.podman.podman_container:

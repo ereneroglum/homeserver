@@ -7,7 +7,7 @@
     timezone: "Europe/Istanbul"
 
     freshrss_config_dir: "/media/westerndigital/Freshrss"
-    freshrss_webui_port: 7000
+    # freshrss_webui_port: 7000
 
   tasks:
     - name: Install Podman
@@ -31,6 +31,10 @@
         create_home: false
         uid: "{{ freshrss_uid }}"
 
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
+
     - name: Create Freshrss config directory
       ansible.builtin.file:
         path: "{{ freshrss_config_dir }}"
@@ -47,8 +51,9 @@
         state: started
         rm: true
         detach: true
+        network: homeserver-network
         ports:
-          - "{{ freshrss_webui_port }}:80/tcp"
+          # - "{{ freshrss_webui_port }}:80/tcp"
         env:
           PUID: "{{ freshrss_uid }}"
           PGID: "{{ freshrss_gid }}"

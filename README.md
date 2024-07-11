@@ -22,6 +22,13 @@ General order of deployment is:
 
 - Edit ```inventory```
 
+First deploy these for reverse proxy:
+
+- Homer (You need to edit ```homer/config.yml``` before this step)
+- Caddy
+
+Then edit your `/etc/hosts` or set up a private dns for entries at `caddy/Caddyfile`. After deploy:
+
 In any order:
 
 
@@ -30,12 +37,11 @@ In any order:
 - Nextcloud
 - Qbittorrent
 - Quassel
+- Home Assistant
 
 In order (1st Group):
 
 - Media
-- Homer (You need to edit ```homer/config.yml``` before this step)
-- Caddy
 - Recyclarr (You need to edit ```recyclarr/recyclarr.yml``` before this step)
 
 In order (2nd Group):
@@ -105,4 +111,16 @@ You can find password of both Qbittorrent instances by:
 ```
 sudo podman logs qbittorrent
 sudo podman logs qbittorrent-manual
+```
+
+## Reverse proxy on home assistant
+
+Add following to `homeassistant/configuration.yaml`:
+
+
+```
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 10.0.0.0/8
 ```

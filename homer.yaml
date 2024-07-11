@@ -5,7 +5,7 @@
     media_gid: 1001
 
     homer_config_dir: "/media/westerndigital/Media/homer"
-    homer_webui_port: 9090
+    # homer_webui_port: 9090
 
   tasks:
     - name: Install Podman
@@ -28,6 +28,10 @@
         shell: /usr/sbin/nologin
         create_home: false
         uid: "{{ media_uid }}"
+
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
 
     - name: Create Homer config directory
       ansible.builtin.file:
@@ -53,9 +57,10 @@
         state: started
         rm: true
         detach: true
+        network: homeserver-network
         user: "{{ media_uid }}:{{ media_gid }}"
         ports:
-          - "{{ homer_webui_port }}:8080/tcp"
+        #   - "{{ homer_webui_port }}:8080/tcp"
         volume:
           - "{{ homer_config_dir }}:/www/assets"
 

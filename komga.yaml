@@ -6,7 +6,7 @@
     data_dir: "/media/westerndigital/Media/data"
 
     komga_config_dir: "/media/westerndigital/Media/komga"
-    komga_webui_port: 25600
+    # komga_webui_port: 25600
 
   tasks:
     - name: Install Podman
@@ -29,6 +29,10 @@
         shell: /usr/sbin/nologin
         create_home: false
         uid: "{{ media_uid }}"
+
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
 
     - name: Create data directory
       ansible.builtin.file:
@@ -55,9 +59,10 @@
         state: started
         rm: true
         detach: true
+        network: homeserver-network
         user: "{{ media_uid }}:{{ media_gid }}"
         ports:
-          - "{{ komga_webui_port }}:25600"
+        #  - "{{ komga_webui_port }}:25600"
         volume:
           - "{{ komga_config_dir }}:/config"
           - "{{ data_dir }}:/data"

@@ -33,6 +33,10 @@
         create_home: false
         uid: "{{ media_uid }}"
 
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
+
     - name: Create data directory
       ansible.builtin.file:
         path: "{{ data_dir }}"
@@ -58,10 +62,11 @@
         state: started
         rm: true
         detach: true
+        network: homeserver-network
         ports:
           - "{{ qbittorrent_torrent_port }}:{{ qbittorrent_torrent_port }}"
           - "{{ qbittorrent_torrent_port }}:{{ qbittorrent_torrent_port }}/udp"
-          - "{{ qbittorrent_webui_port }}:{{ qbittorrent_webui_port }}"
+          # - "{{ qbittorrent_webui_port }}:{{ qbittorrent_webui_port }}"
         env:
           PUID: "{{ media_uid }}"
           PGID: "{{ media_gid }}"

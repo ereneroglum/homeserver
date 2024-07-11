@@ -1,0 +1,140 @@
+---
+- hosts: homeserver
+  vars:
+    homeassistant_uid: 1007
+    homeassistant_gid: 1007
+    timezone: "Europe/Istanbul"
+
+    mosquitto_config_dir: "/media/westerndigital/Home Assistant/mosquitto"
+    homeassistant_config_dir: "/media/westerndigital/Home Assistant/homeassistant"
+    zigbee2mqtt_config_dir: "/media/westerndigital/Home Assistant/zigbee2mqtt"
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Homeassistant group
+      ansible.builtin.group:
+        name: homeassistant
+        state: present
+        gid: "{{ homeassistant_gid }}"
+
+    - name: Create Homeassistant user
+      ansible.builtin.user:
+        name: homeassistant
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ homeassistant_uid }}"
+
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
+
+    - name: Create Homeassistant pod
+      containers.podman.podman_pod:
+        name: homeassistant
+        network: homeserver-network
+
+    - name: Create Mosquitto config directory
+      ansible.builtin.file:
+        path: "{{ mosquitto_config_dir }}"
+        state: directory
+        owner: homeassistant
+        group: homeassistant
+        mode: 0755
+        recurse: yes
+
+    - name: Copy Mosquitto files to remote
+      ansible.builtin.copy:
+        src: homeassistant/mosquitto.conf
+        dest: "{{ mosquitto_config_dir }}/mosquitto.conf"
+        owner: "{{ homeassistant_uid }}"
+        group: "{{ homeassistant_gid }}"
+        force: yes
+
+    - name: Create Mosquitto container
+      containers.podman.podman_container:
+        name: homeassistant-mosquitto
+        image: docker.io/library/eclipse-mosquitto:latest
+        pod: homeassistant
+        state: started
+        rm: true
+        detach: true
+        user: "{{ homeassistant_uid }}:{{ homeassistant_gid }}"
+        volume:
+          - "{{ mosquitto_config_dir }}:/mosquitto/config"
+
+    - name: Create ZigBee2MQTT config directory
+      ansible.builtin.file:
+        path: "{{ zigbee2mqtt_config_dir }}"
+        state: directory
+        owner: homeassistant
+        group: homeassistant
+        mode: 0755
+        recurse: yes
+
+    - name: Copy ZigBee2MQTT files to remote
+      ansible.builtin.copy:
+        src: homeassistant/zigbee2mqtt.yaml
+        dest: "{{ zigbee2mqtt_config_dir }}/configuration.yaml"
+        owner: "{{ homeassistant_uid }}"
+        group: "{{ homeassistant_gid }}"
+        force: yes
+
+    - name: Create ZigBee2MQTT container
+      containers.podman.podman_container:
+        name: homeassistant-zigbee2mqtt
+        image: docker.io/koenkk/zigbee2mqtt:latest
+        pod: homeassistant
+        state: started
+        rm: true
+        detach: true
+        # user: "{{ homeassistant_uid }}:{{ homeassistant_gid }}" # TODO FIX
+        env:
+          TZ: "{{ timezone }}"
+        volume:
+          - "{{ zigbee2mqtt_config_dir }}:/app/data"
+          - "/run/udev:/run/udev:ro"
+        device:
+          - "/dev/ttyACM0:/dev/ttyACM0"
+
+    - name: Create Home Assistant config directory
+      ansible.builtin.file:
+        path: "{{ homeassistant_config_dir }}"
+        state: directory
+        owner: homeassistant
+        group: homeassistant
+        mode: 0755
+        recurse: yes
+
+    - name: Create Home Assistant container
+      containers.podman.podman_container:
+        name: homeassistant-homeassistant
+        image: ghcr.io/home-assistant/home-assistant:stable
+        pod: homeassistant
+        state: started
+        rm: true
+        detach: true
+        user: "{{ homeassistant_uid }}:{{ homeassistant_gid }}"
+        volume:
+          - "{{ homeassistant_config_dir }}:/config"
+          - "/etc/localtime:/etc/localtime:ro"
+          - "/run/udev:/run/udev:ro"
+
+    - name: Generate Systemd unit file for Homeassistant pod
+      containers.podman.podman_generate_systemd:
+        name: homeassistant
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Homeassistant pod is started and enabled
+      ansible.builtin.systemd:
+        name: pod-homeassistant
+        daemon_reload: true
+        state: started
+        enabled: true
