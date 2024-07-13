@@ -1,0 +1,90 @@
+---
+- hosts: homeserver
+  vars:
+    pihole_uid: 1008
+    pihole_gid: 1008
+    timezone: "Europe/Istanbul"
+
+    pihole_config_dir: "/media/westerndigital/Pi-hole/pihole"
+    dnsmasq_config_dir: "/media/westerndigital/Pi-hole/dnsmasq"
+    pihole_dns_servers: "9.9.9.9;1.1.1.1"
+
+  vars_prompt:
+    - name: webpassword
+      prompt: "Web Interface Password"
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.package:
+        name:
+          - podman
+        state: present
+
+    - name: Create Pi-hole group
+      ansible.builtin.group:
+        name: pihole
+        state: present
+        gid: "{{ pihole_gid }}"
+
+    - name: Create Pi-hole user
+      ansible.builtin.user:
+        name: pihole
+        state: present
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        uid: "{{ pihole_uid }}"
+
+    - name: Create homeserver network
+      containers.podman.podman_network:
+        name: homeserver-network
+
+    - name: Create Pi-hole config directory
+      ansible.builtin.file:
+        path: "{{ pihole_config_dir }}"
+        state: directory
+        owner: pihole
+        group: pihole
+        mode: 0755
+        recurse: yes
+
+    - name: Create DNSMasq config directory
+      ansible.builtin.file:
+        path: "{{ dnsmasq_config_dir }}"
+        state: directory
+        owner: pihole
+        group: pihole
+        mode: 0755
+        recurse: yes
+
+    - name: Create Pi-hole container
+      containers.podman.podman_container:
+        name: pihole
+        image: docker.io/pihole/pihole:latest
+        state: started
+        rm: true
+        detach: true
+        network: homeserver-network
+        ports:
+          - "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}:53:53/tcp"
+          - "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}:53:53/udp"
+        env:
+          TZ: "{{ timezone }}"
+          WEBPASSWORD: "{{ webpassword }}"
+          PIHOLE_DNS_: "{{ pihole_dns_servers }}"
+        volume:
+          - "{{ pihole_config_dir }}:/etc/pihole"
+          - "{{ dnsmasq_config_dir }}:/etc/dnsmasq.d"
+
+    - name: Generate Systemd unit file for Pi-hole container
+      containers.podman.podman_generate_systemd:
+        name: pihole
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Pi-hole container is started and enabled
+      ansible.builtin.systemd:
+        name: pihole
+        daemon_reload: true
+        state: started
+        enabled: true

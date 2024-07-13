@@ -135,3 +135,8 @@ services:
         logo: "assets/tools/router.png"
         keywords: "router gateaway keenetic internet wifi"
         url: "http://192.168.1.1"
+      - name: "Pi-hole"
+        logo: "assets/tools/pihole.svg"
+        subtitle: "A black hole for Internet advertisements"
+        keywords: "DNS domain name server resolver adblock"
+        url: "https://pihole.local/admin"

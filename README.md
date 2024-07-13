@@ -22,15 +22,23 @@ General order of deployment is:
 
 - Edit ```inventory```
 
-First deploy these for reverse proxy:
+Now deploy these for reverse proxy and DNS:
 
 - Homer (You need to edit ```homer/config.yml``` before this step)
 - Caddy
+- Pi-hole
 
-Then edit your `/etc/hosts` or set up a private dns for entries at `caddy/Caddyfile`. After deploy:
+Then edit your `/etc/hosts` and add `<IP of Server> pihole.local` to your configuration computers (the one you execute ansible, not the remote server) `/etc/hosts`.
+
+Then every entry in `caddy/Caddyfile` as an A record in the pihole (including `pihole.local`). Now you can remove the `<IP of Server> pihole.local` from the configuration computers `/etc/hosts`.
+
+Setup your dhcp server such that the advertised dns points to the pihole.
+
+Setup `systemd-resolved` in `uplink` mode in your server pointing to itselfs lan ip (probably something like `192.168.0.x`, you can obtain it with `ip a`).
+
+After deploy:
 
 In any order:
-
 
 - Jellyfin
 - Komga
@@ -48,6 +56,8 @@ In order (2nd Group):
 
 - Rsshub
 - Freshrss
+
+On every device on the network, go to `certificates.local` and download and install `root.crt` as a Certificate Authority.
 
 ## About Dependencies
 

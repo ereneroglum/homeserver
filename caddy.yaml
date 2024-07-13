@@ -70,6 +70,7 @@
         network: homeserver-network
         user: "{{ media_uid }}:{{ media_gid }}"
         ports:
+          - "80:80/tcp" # Default http port mapping
           - "443:443/tcp" # Default https port mapping
         volume:
           - "{{ caddy_config_dir }}:/etc/caddy"

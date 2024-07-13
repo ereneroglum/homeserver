@@ -72,3 +72,17 @@ zigbee2mqtt.local:443 {
     tls internal
     reverse_proxy homeassistant:8080
 }
+
+http://certificates.local {
+    handle_path /* {
+        root * /data/caddy/pki/authorities/local
+        file_server browse {
+            hide *.key
+        }
+    }
+}
+
+pihole.local:443 {
+    tls internal
+    reverse_proxy pihole:80
+}
