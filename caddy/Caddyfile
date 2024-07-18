@@ -1,74 +1,74 @@
-homer.local:443 {
+homer.local {
     tls internal
     reverse_proxy homer:8080
 }
 
-komga.local:443 {
+komga.local {
     tls internal
     reverse_proxy komga:25600
 }
 
-jellyfin.local:443 {
+jellyfin.local {
     tls internal
     reverse_proxy jellyfin:8096
 }
 
-freshrss.local:443 {
+freshrss.local {
     tls internal
     reverse_proxy freshrss:80
 }
 
-sonarr.local:443 {
+sonarr.local {
     tls internal
     reverse_proxy media:8989
 }
 
-radarr.local:443 {
+radarr.local {
     tls internal
     reverse_proxy media:7878
 }
 
-lidarr.local:443 {
+lidarr.local {
     tls internal
     reverse_proxy media:8686
 }
 
-readarr.local:443 {
+readarr.local {
     tls internal
     reverse_proxy media:8787
 }
 
-qbittorrent.local:443 {
+qbittorrent.local {
     tls internal
     reverse_proxy media:8080
 }
 
-qbittorrent-manual.local:443 {
+qbittorrent-manual.local {
     tls internal
     reverse_proxy qbittorrent-manual:8081
 }
 
-prowlarr.local:443 {
+prowlarr.local {
     tls internal
     reverse_proxy media:9696
 }
 
-slskd.local:443 {
+slskd.local {
     tls internal
     reverse_proxy media:5030
 }
 
-rsshub.local:443 {
+rsshub.local {
     tls internal
     reverse_proxy rsshub:1200
 }
 
-homeassistant.local:443 {
+homeassistant.local {
     tls internal
     reverse_proxy homeassistant:8123
 }
 
-zigbee2mqtt.local:443 {
+zigbee2mqtt.local {
     tls internal
     reverse_proxy homeassistant:8080
 }
@@ -82,7 +82,7 @@ http://certificates.local {
     }
 }
 
-pihole.local:443 {
+pihole.local {
     tls internal
     reverse_proxy pihole:80
 }
