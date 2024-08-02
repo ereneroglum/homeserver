@@ -5,9 +5,9 @@
     pihole_gid: 1008
     timezone: "Europe/Istanbul"
 
+    unbound_port: 5151
     pihole_config_dir: "/media/westerndigital/Pi-hole/pihole"
     dnsmasq_config_dir: "/media/westerndigital/Pi-hole/dnsmasq"
-    pihole_dns_servers: "9.9.9.9;1.1.1.1"
 
   vars_prompt:
     - name: webpassword
@@ -38,6 +38,31 @@
     - name: Create homeserver network
       containers.podman.podman_network:
         name: homeserver-network
+
+    - name: Create Unbound container
+      containers.podman.podman_container:
+        name: unbound
+        image: docker.io/mvance/unbound-rpi:latest
+        state: started
+        rm: true
+        detach: true
+        network: homeserver-network
+        ports:
+          - "{{ unbound_port }}:53/tcp"
+          - "{{ unbound_port }}:53/udp"
+
+    - name: Generate Systemd unit file for Unbound container
+      containers.podman.podman_generate_systemd:
+        name: unbound
+        new: true
+        dest: /etc/systemd/system
+
+    - name: Ensure Unbound container is started and enabled
+      ansible.builtin.systemd:
+        name: container-unbound
+        daemon_reload: true
+        state: started
+        enabled: true
 
     - name: Create Pi-hole config directory
       ansible.builtin.file:
@@ -71,7 +96,7 @@
         env:
           TZ: "{{ timezone }}"
           WEBPASSWORD: "{{ webpassword }}"
-          PIHOLE_DNS_: "{{ pihole_dns_servers }}"
+          PIHOLE_DNS_: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}#{{ unbound_port }}"
         volume:
           - "{{ pihole_config_dir }}:/etc/pihole"
           - "{{ dnsmasq_config_dir }}:/etc/dnsmasq.d"
@@ -84,7 +109,7 @@
 
     - name: Ensure Pi-hole container is started and enabled
       ansible.builtin.systemd:
-        name: pihole
+        name: container-pihole
         daemon_reload: true
         state: started
         enabled: true
