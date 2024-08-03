@@ -4,6 +4,8 @@
     media_uid: 1001
     media_gid: 1001
 
+    media_dir: "/media/westerndigital/Media/data/media"
+
     caddy_config_dir: "/media/westerndigital/Media/caddy/config"
     caddy_data_dir: "/media/westerndigital/Media/caddy/data"
     # Exported ports should be changed from below
@@ -75,6 +77,7 @@
         volume:
           - "{{ caddy_config_dir }}:/etc/caddy"
           - "{{ caddy_data_dir }}:/data/caddy"
+          - "{{ media_dir }}:/media"
 
     - name: Generate Systemd unit file for Caddy container
       containers.podman.podman_generate_systemd:

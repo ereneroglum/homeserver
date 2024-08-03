@@ -1,88 +1,96 @@
-homer.local {
+homer.internal {
     tls internal
     reverse_proxy homer:8080
 }
 
-komga.local {
+komga.internal {
     tls internal
     reverse_proxy komga:25600
 }
 
-jellyfin.local {
+jellyfin.internal {
     tls internal
     reverse_proxy jellyfin:8096
 }
 
-freshrss.local {
+freshrss.internal {
     tls internal
     reverse_proxy freshrss:80
 }
 
-sonarr.local {
+sonarr.internal {
     tls internal
     reverse_proxy media:8989
 }
 
-radarr.local {
+radarr.internal {
     tls internal
     reverse_proxy media:7878
 }
 
-lidarr.local {
+lidarr.internal {
     tls internal
     reverse_proxy media:8686
 }
 
-readarr.local {
+readarr.internal {
     tls internal
     reverse_proxy media:8787
 }
 
-qbittorrent.local {
+qbittorrent.internal {
     tls internal
     reverse_proxy media:8080
 }
 
-qbittorrent-manual.local {
+qbittorrent-manual.internal {
     tls internal
     reverse_proxy qbittorrent-manual:8081
 }
 
-prowlarr.local {
+prowlarr.internal {
     tls internal
     reverse_proxy media:9696
 }
 
-slskd.local {
+slskd.internal {
     tls internal
     reverse_proxy media:5030
 }
 
-rsshub.local {
+rsshub.internal {
     tls internal
     reverse_proxy rsshub:1200
 }
 
-homeassistant.local {
+homeassistant.internal {
     tls internal
     reverse_proxy homeassistant:8123
 }
 
-zigbee2mqtt.local {
+zigbee2mqtt.internal {
     tls internal
     reverse_proxy homeassistant:8080
 }
 
-http://certificates.local {
+http://certificates.internal {
     handle_path /* {
-        root * /data/caddy/pki/authorities/local
+        root * /data/caddy/pki/authorities.internal
         file_server browse {
             hide *.key
         }
     }
 }
 
-pihole.local {
+pihole.internal {
     tls internal
     reverse_proxy pihole:80
+}
+
+media.internal {
+    tls internal
+    handle_path /* {
+        root * /media
+        file_server browse
+    }
 }

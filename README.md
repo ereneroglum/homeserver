@@ -28,9 +28,9 @@ Now deploy these for reverse proxy and DNS:
 - Caddy
 - Pi-hole
 
-Then edit your `/etc/hosts` and add `<IP of Server> pihole.local` to your configuration computers (the one you execute ansible, not the remote server) `/etc/hosts`.
+Then edit your `/etc/hosts` and add `<IP of Server> pihole.internal` to your configuration computers (the one you execute ansible, not the remote server) `/etc/hosts`.
 
-Then every entry in `caddy/Caddyfile` as an A record in the pihole (including `pihole.local`). Now you can remove the `<IP of Server> pihole.local` from the configuration computers `/etc/hosts`.
+Then every entry in `caddy/Caddyfile` as an A record in the pihole (including `pihole.internal`). Now you can remove the `<IP of Server> pihole.internal` from the configuration computers `/etc/hosts`.
 
 Setup your dhcp server such that the advertised dns points to the pihole.
 
@@ -42,7 +42,6 @@ In any order:
 
 - Jellyfin
 - Komga
-- Nextcloud
 - Qbittorrent
 - Quassel
 - Home Assistant
@@ -57,7 +56,7 @@ In order (2nd Group):
 - Rsshub
 - Freshrss
 
-On every device on the network, go to `certificates.local` and download and install `root.crt` as a Certificate Authority.
+On every device on the network, go to `certificates.internal` and download and install `root.crt` as a Certificate Authority.
 
 ## About Dependencies
 
