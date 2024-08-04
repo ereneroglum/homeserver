@@ -128,7 +128,7 @@ services:
     items:
       - name: "Home Assistant"
         logo: "assets/tools/homeassistant.svg"
-        subtitle: "Open source home automation that puts.internal control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts."
+        subtitle: "Open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts."
         keywords: "home assistant zigbee automation"
         url: "https://homeassistant.internal"
       - name: "Router"

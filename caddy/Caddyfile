@@ -75,7 +75,7 @@ zigbee2mqtt.internal {
 
 http://certificates.internal {
     handle_path /* {
-        root * /data/caddy/pki/authorities.internal
+        root * /data/caddy/pki/authorities/local
         file_server browse {
             hide *.key
         }
